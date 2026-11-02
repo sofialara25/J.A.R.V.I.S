@@ -1,0 +1,22 @@
+{
+  "name": "jarvis-asistente",
+  "version": "1.0.0",
+  "description": "J.A.R.V.I.S. - asistente virtual con Google Gemini (proyecto académico de consumo de APIs)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "jarvis",
+    "asistente",
+    "gemini",
+    "api"
+  ],
+  "author": "Sofía",
+  "license": "ISC",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=18"
+  }
+}
