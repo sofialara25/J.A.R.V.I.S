@@ -1,5 +1,26 @@
-node_modules/
+# Java / Tomcat
+target/
+build/
+*.class
+*.war
+*.jar
+out/
+
+# NetBeans / Eclipse / VSCode
+nbproject/
+.classpath
+.project
+.settings/
+.idea/
+*.iml
+.vscode/
+
+# Secretos - NUNCA subir la clave
 .env
-*.log
+config.properties
+*key*.txt
+*KEY*.txt
+
+# OS
 .DS_Store
 Thumbs.db
