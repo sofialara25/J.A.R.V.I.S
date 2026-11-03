@@ -2,24 +2,24 @@
 
 Asistente virtual inspirado en la IA de Iron Man. Proyecto académico de consumo de APIs con IA (Google Gemini).
 
-## Instalación
+## Requisitos
 
-```bash
-npm install
-```
+- JDK 17 o superior
+- Apache Tomcat 9
+- Apache NetBeans con Maven
 
 ## API key
 
-1. Crea tu clave en https://aistudio.google.com/apikey
-2. Copia `.env.example` a `.env`
-3. Pega la clave en `GEMINI_API_KEY`
+1. Consigue tu clave en https://aistudio.google.com/apikey
+2. Edita `src/main/resources/config.properties`
+3. Pega la clave en `gemini.api.key`
 
-Si la clave queda vacía, el servidor arranca en modo mock (respuestas de prueba, sin gastar la API).
+Sin clave, la app corre en modo mock (respuestas de prueba). También se lee de la variable de entorno `GEMINI_API_KEY`. El modelo va en `gemini.model` (por defecto `gemini-2.5-flash`).
 
 ## Ejecutar
 
-```bash
-npm start
-```
+1. Abre el proyecto con **File > Open Project** en NetBeans
+2. Clic derecho sobre el proyecto > **Run** (se despliega en Tomcat 9)
+3. Abre http://localhost:8080/jarvis/
 
-Abre http://localhost:3000 en el navegador. Modo desarrollo: `npm run dev`.
+Compilar desde terminal: `mvn clean package` (genera `target/jarvis.war`).
