@@ -44,15 +44,30 @@ public class GeminiClient {
             return respuestaMock();
         }
         JsonObject cuerpo = armarCuerpo(historial);
-        try {
-            return llamar(Configuracion.getModelo(), cuerpo);
-        } catch (GeminiException e) {
-            // Si el modelo configurado no existe, se intenta con el flash de respaldo
-            if ("model_not_found".equals(e.getCodigo())) {
-                return llamar(Configuracion.getModeloRespaldo(), cuerpo);
+
+        // Cadena de modelos: configurado -> respaldo -> alternativo (si uno ya no existe, sigue)
+        String[] cadena = {
+            Configuracion.getModelo(),
+            Configuracion.getModeloRespaldo(),
+            Configuracion.MODELO_POR_DEFECTO
+        };
+        GeminiException ultimoError = null;
+        java.util.Set<String> intentados = new java.util.LinkedHashSet<>();
+        for (String modelo : cadena) {
+            if (modelo == null || modelo.isBlank() || !intentados.add(modelo)) {
+                continue;
             }
-            throw e;
+            try {
+                return llamar(modelo, cuerpo);
+            } catch (GeminiException e) {
+                if (!"model_not_found".equals(e.getCodigo())) {
+                    throw e;
+                }
+                ultimoError = e;
+            }
         }
+        throw ultimoError != null ? ultimoError
+                : new GeminiException("model_not_found", "Ningún modelo de Gemini está disponible.", 404);
     }
 
     // JSON: systemInstruction + contents + generationConfig
@@ -188,8 +203,8 @@ public class GeminiClient {
         }
     }
 
-    /** Respuesta de prueba cuando no hay clave configurada. */
-    private String respuestaMock() {
+    /** Respuesta de prueba cuando no hay clave configurada (visible para las pruebas). */
+    String respuestaMock() {
         return "Modo demostración, señora: falta la clave de API en src/main/resources/config.properties, "
                 + "así que esta es una respuesta de prueba. El resto del sistema opera con normalidad.";
     }

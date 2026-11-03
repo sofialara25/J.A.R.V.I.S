@@ -1,7 +1,6 @@
 package com.jarvis.ai;
 
 import com.jarvis.util.Configuracion;
-import java.util.ArrayList;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -17,8 +16,9 @@ public class GeminiClientTest {
     }
 
     @Test
-    public void mockRespondeTextoEnPersonaje() throws Exception {
-        String respuesta = new GeminiClient().responder(new ArrayList<>());
+    public void mockRespondeTextoEnPersonaje() {
+        // Se prueba la respuesta mock directamente: la prueba no debe depender de red ni de la clave
+        String respuesta = new GeminiClient().respuestaMock();
         assertNotNull(respuesta);
         assertFalse(respuesta.isBlank());
         assertTrue(respuesta.toLowerCase().contains("señora"));

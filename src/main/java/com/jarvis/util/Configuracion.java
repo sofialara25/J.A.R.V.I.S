@@ -11,8 +11,9 @@ import java.util.Properties;
 public final class Configuracion {
 
     private static final String RUTA = "/config.properties";
-    private static final String MODELO_POR_DEFECTO = "gemini-2.5-flash";
-    private static final String MODELO_RESPALDO = "gemini-2.0-flash";
+    // Modelos verificados con generateContent (2.5-flash ya no acepta usuarios nuevos)
+    public static final String MODELO_POR_DEFECTO = "gemini-3.5-flash";
+    public static final String MODELO_RESPALDO = "gemini-flash-lite-latest";
 
     private static Properties props;
 

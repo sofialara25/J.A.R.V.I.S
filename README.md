@@ -14,7 +14,7 @@ Asistente virtual inspirado en la IA de Iron Man. Proyecto académico de consumo
 2. Edita `src/main/resources/config.properties`
 3. Pega la clave en `gemini.api.key`
 
-Sin clave, la app corre en modo mock (respuestas de prueba). También se lee de la variable de entorno `GEMINI_API_KEY`. El modelo va en `gemini.model` (por defecto `gemini-2.5-flash`).
+Sin clave, la app corre en modo mock (respuestas de prueba). También se lee de la variable de entorno `GEMINI_API_KEY`. El modelo va en `gemini.model` (por defecto `gemini-3.5-flash`; si un modelo deja de existir, la app prueba otro automáticamente).
 
 ## Ejecutar
 
