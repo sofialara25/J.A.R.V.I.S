@@ -20,6 +20,6 @@ Sin clave, la app corre en modo mock (respuestas de prueba). También se lee de 
 
 1. Abre el proyecto con **File > Open Project** en NetBeans
 2. Clic derecho sobre el proyecto > **Run** (se despliega en Tomcat 9)
-3. Abre http://localhost:8080/jarvis/
+3. Abre la URL que NetBeans muestre en la consola (con tu Tomcat: http://localhost:8082/jarvis/)
 
 Compilar desde terminal: `mvn clean package` (genera `target/jarvis.war`).
