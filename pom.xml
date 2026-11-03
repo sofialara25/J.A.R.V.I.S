@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.jarvis</groupId>
+    <artifactId>jarvis</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
+    <name>jarvis-1.0-SNAPSHOT</name>
+
+    <properties>
+        <!-- Compila con el JDK instalado (24); 17 es LTS y corre en Tomcat 9 -->
+        <maven.compiler.release>17</maven.compiler.release>
+        <!-- UTF-8 para que las tildes no se corrompan -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <failOnMissingWebXml>false</failOnMissingWebXml>
+    </properties>
+
+    <dependencies>
+        <!-- API de Servlets javax.* (Tomcat 9). scope provided: la trae Tomcat en runtime -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>4.0.1</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- JSON: leer y escribir las respuestas de la API y del servlet -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.11.0</version>
+        </dependency>
+
+        <!-- Pruebas -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.2</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <!-- Nombre del WAR: http://localhost:8080/jarvis/ -->
+        <finalName>jarvis</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.4.0</version>
+                <configuration>
+                    <failOnMissingWebXml>false</failOnMissingWebXml>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <!-- Perfil solo para la prueba de humo con Jetty: no afecta al WAR final -->
+        <profile>
+            <id>smoke</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.eclipse.jetty</groupId>
+                        <artifactId>jetty-maven-plugin</artifactId>
+                        <version>9.4.57.v20241219</version>
+                        <configuration>
+                            <httpConnector>
+                                <port>8080</port>
+                            </httpConnector>
+                            <scanIntervalSeconds>0</scanIntervalSeconds>
+                            <webApp>
+                                <contextPath>/jarvis</contextPath>
+                            </webApp>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>
