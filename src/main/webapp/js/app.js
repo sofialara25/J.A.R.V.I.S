@@ -21,7 +21,9 @@
   let busy = false;
   let voiceOn = true;
   let recognition = null;
-  let listening = false;
+  let listening = false;   // el reconocimiento está captando ahora
+  let micOn = false;       // micrófono encendido por la usuaria (queda hasta que lo apague)
+  let speaking = false;    // J.A.R.V.I.S. está hablando
 
   const ERROR_FALLBACK = 'Se presentó un problema inesperado, señora. Intente de nuevo.';
 
@@ -38,7 +40,10 @@
   }
 
   function setSpeaking(on) {
+    speaking = on;
     document.body.classList.toggle('speaking', on);
+    // Terminó de hablar: si el micrófono sigue encendido, vuelve a escuchar
+    if (!on) reanudarMic();
   }
 
   function scrollBottom() {
@@ -84,6 +89,7 @@
   function speak(text) {
     if (!voiceOn || !('speechSynthesis' in window) || !text) return;
     window.speechSynthesis.cancel();
+    speaking = true; // se marca ya para que el micrófono no arranque mientras habla
     const utter = new SpeechSynthesisUtterance(text);
     utter.lang = 'es-CO';
     const voice = pickVoice();
@@ -100,7 +106,6 @@
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
     setSpeaking(false);
   }
-
   // ---------- Comandos locales (sin gastar la API) ----------
 
   function localCommand(raw) {
@@ -149,11 +154,15 @@
     input.value = '';
     scrollBottom();
 
+    // Mientras responde no debe escucharse a sí mismo
+    pausarEscucha();
+
     // Comandos locales: no tocan la API
     const local = localCommand(text);
     if (local) {
       addMessage('assistant', local);
       speak(local);
+      reanudarMic();
       return;
     }
 
@@ -208,10 +217,50 @@
       setThinking(false);
       scrollBottom();
       input.focus();
+      // Si no hay voz activa, reanuda el micrófono directamente
+      reanudarMic();
     }
   }
 
   // ---------- Micrófono (Web Speech API) ----------
+  // El micrófono queda encendido hasta que la usuaria lo apague:
+  // se pausa solo mientras J.A.R.V.I.S. procesa o habla, y solo se
+  // detiene si se pulsa MICRÓFONO: OFF.
+
+  function actualizarBotonMic() {
+    micBtn.textContent = micOn ? 'MICRÓFONO: ON' : 'MICRÓFONO: OFF';
+    micBtn.classList.toggle('active', micOn);
+    micBtn.setAttribute('aria-pressed', String(micOn));
+    micBtn.title = micOn ? 'Apagar el micrófono' : 'Encender el micrófono';
+  }
+
+  function empezarEscucha() {
+    // Solo escucha si está encendido, libre (no procesando) y sin hablar
+    if (!micOn || !recognition || busy || speaking || listening) return;
+    try {
+      recognition.start();
+    } catch (e) {
+      /* ya iniciado */
+    }
+  }
+
+  function pausarEscucha() {
+    if (recognition && listening) {
+      try {
+        recognition.stop();
+      } catch (e) {
+        /* ya detenido */
+      }
+    }
+  }
+
+  // Se llama al terminar de hablar o de procesar: reanuda si sigue encendido
+  function reanudarMic() {
+    if (micOn && !busy && !speaking) {
+      // Pequeña pausa para que el navegador libere el micrófono
+      setTimeout(empezarEscucha, 250);
+    }
+  }
 
   function setupRecognition() {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -220,12 +269,12 @@
     const rec = new SR();
     rec.lang = 'es-CO';
     rec.interimResults = true;
-    rec.continuous = false;
+    rec.continuous = true; // que no se corte solo al dejar de hablar
     rec.maxAlternatives = 1;
 
     rec.onstart = () => {
       listening = true;
-      micBtn.classList.add('active');
+      micBtn.classList.add('listening');
       setStatus('ESCUCHANDO...', 'busy');
     };
 
@@ -242,20 +291,30 @@
     };
 
     rec.onerror = (event) => {
-      listening = false;
-      micBtn.classList.remove('active');
       if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+        micOn = false;
+        listening = false;
+        actualizarBotonMic();
+        micBtn.classList.remove('listening');
         showError('Permiso de micrófono denegado, señora. Habilítelo en el navegador.');
-      } else if (event.error !== 'no-speech' && event.error !== 'aborted') {
-        showError('No se pudo escuchar. Intente de nuevo, señora.');
+        setStatus('EN LÍNEA');
+      } else if (event.error === 'audio-capture') {
+        micOn = false;
+        listening = false;
+        actualizarBotonMic();
+        micBtn.classList.remove('listening');
+        showError('No se detectó micrófono, señora.');
+        setStatus('EN LÍNEA');
       }
-      setStatus('EN LÍNEA');
+      // Errores transitorios (no-speech, aborted, network): no apagan el botón
     };
 
     rec.onend = () => {
       listening = false;
-      micBtn.classList.remove('active');
-      if (!busy) setStatus('EN LÍNEA');
+      micBtn.classList.remove('listening');
+      // Si sigue encendido y no está procesando ni hablando, vuelve a escuchar
+      reanudarMic();
+      if (!micOn && !busy) setStatus('EN LÍNEA');
     };
 
     return rec;
@@ -266,15 +325,16 @@
       showError('Este navegador no soporta reconocimiento de voz, señora. Use Chrome o Edge.');
       return;
     }
-    if (listening) {
-      recognition.stop();
-      return;
-    }
-    stopSpeaking();
-    try {
-      recognition.start();
-    } catch (e) {
-      /* ya iniciado */
+    micOn = !micOn;
+    actualizarBotonMic();
+
+    if (micOn) {
+      stopSpeaking();
+      setStatus('ESCUCHANDO...', 'busy');
+      empezarEscucha();
+    } else {
+      pausarEscucha();
+      if (!busy) setStatus('EN LÍNEA');
     }
   }
 
@@ -317,10 +377,15 @@
   // ---------- Arranque ----------
   function init() {
     recognition = setupRecognition();
+    actualizarBotonMic();
     if (!('speechSynthesis' in window)) {
       voiceOn = false;
       voiceBtn.textContent = 'VOZ: N/D';
       voiceBtn.disabled = true;
+    }
+    if (!recognition) {
+      micBtn.disabled = true;
+      micBtn.textContent = 'MICRÓFONO: N/D';
     }
     addMessage('assistant', 'Sistema en línea, señora. J.A.R.V.I.S. a su servicio. ¿En qué puedo ayudarle?');
     setStatus('EN LÍNEA');
